@@ -20,7 +20,8 @@ jobs:
          # devops-integration-user-password: '3o7xwdM2GN1K2iQp'
           instance-url: 'https://usps13.servicenowservices.com'
           context-github: ${{ toJSON(github) }}
-          change-request: '{"attributes":{"short_description":"Automated Software Deployment"}'
+          # change-request: '{"attributes":{"short_description":"Automated Software Deployment"}}'
+          change-request: '{"setCloseCode":"true","attributes":{"short_description":"Automated Software Deployment","description":"Automated Software Deployment.","assignment_group":"a715cd759f2002002920bde8132e7018","implementation_plan":"Software update is tested and results can be found in Test Summaries Tab; When the change is approved the implementation happens automated by the CICD pipeline within the change planned start and end time window.","backout_plan":"When software fails in production, the previous software release will be re-deployed.","test_plan":"Testing if the software was successfully deployed"}}'
           interval: '100'
           timeout: '3600'
           changeCreationTimeOut: '3600'
