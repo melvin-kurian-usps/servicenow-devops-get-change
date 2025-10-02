@@ -1,0 +1,210 @@
+name: YAML Update CR Creation
+
+on:
+  repository_dispatch:
+    types: [ "YAML Update CR Creation" ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: CRs are only created for CAT/PROD deployments.
+        required: true
+        options:
+        - DEV
+        - SIT
+        - CAT
+        - PROD
+        default: CAT
+      argocd_apps:
+        description: Comma separated list of ArgoCD applications to sync. If '*', ALL ArgoCD applications using this repository will be synced.
+        required: true
+        default: '*'
+      argocd_server:
+        description: ArgoCD Server where the applications are managed. '{env}' will be replaced with 'environment' value, or you can be explicit.
+        required: true
+        default: 'argocd-dev.usps.gov'
+      filename_filter:
+        description: Only files with this string in their path will be updated. Use '*' to search all files.
+        required: true
+        default: 'eastus'
+      subfolder_filter:
+        description: For deploy repos with subfolders. Only files with a parent directory matching this value will be updated. Use '*' to search all subfolders.
+        required: true
+        default: 'cat'
+      yaml_property:
+        description: Yaml property to update. (Usually something like 'image.tag'). Comma separated list for multiple.
+        required: true
+        default: 'image.tag,repository.tag'
+      new_value:
+        description: New value for the specified propert[y/ies]. (Usually a container image tag, e.g., "v3.5.1@sha...")
+        required: true
+        default: 'v4.1.1'
+
+      snow_server:
+        description: Which Service Now instance to create the CR in. (For testing.)
+        type: choice
+        required: true
+        default: DEV
+        options:
+        - DEV
+        - SIT
+        - CAT
+        - PROD
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  yaml-update-cr-creation:
+    name: "YAML Update CR Creation"
+    runs-on: ubuntu-latest
+#    runs-on:
+#      group: on-prem-ubuntu
+    env:
+      # Multiline formatting for these would be nice but it seems to break things - the variables get line breaks added and screws up stuff downstream.
+      SNOW_SERVER_URL: ${{ ( github.event.client_payload.server == 'PROD' && vars.PROD_SN_INSTANCE_URL ) || ( github.event.client_payload.server == 'CAT' && vars.CAT_SN_INSTANCE_URL ) || ( github.event.client_payload.server == 'SIT' && vars.SIT_SN_INSTANCE_URL ) || ( github.event.client_payload.server == 'DEV' && vars.DEV_SN_INSTANCE_URL ) || ( inputs.snow_server == 'PROD' && vars.PROD_SN_INSTANCE_URL ) || ( inputs.snow_server == 'CAT' && vars.CAT_SN_INSTANCE_URL ) || ( inputs.snow_server == 'SIT' && vars.SIT_SN_INSTANCE_URL ) || vars.DEV_SN_INSTANCE_URL }}
+      SNOW_SERVER_ENV: ${{ ( github.event.client_payload.server == 'PROD' && 'PROD' ) || ( github.event.client_payload.server == 'CAT' && 'CAT' ) || ( github.event.client_payload.server == 'SIT' && 'SIT' ) || ( github.event.client_payload.server == 'DEV' && 'DEV' ) || ( inputs.snow_server == 'PROD' && 'PROD' ) || ( inputs.snow_server == 'CAT' && 'CAT' ) || ( inputs.snow_server == 'SIT' && 'SIT' ) || 'DEV' }}
+      SNOW_TOOL_ID: ${{ ( github.event.client_payload.server == 'PROD' && secrets.PROD_SN_ORCHESTRATION_TOOL_ID ) || ( github.event.client_payload.server == 'CAT' && secrets.CAT_SN_ORCHESTRATION_TOOL_ID ) || ( github.event.client_payload.server == 'SIT' && secrets.SIT_SN_ORCHESTRATION_TOOL_ID ) || ( github.event.client_payload.server == 'DEV' && secrets.SN_ORCHESTRATION_TOOL_ID ) || ( inputs.snow_server == 'PROD' && secrets.PROD_SN_ORCHESTRATION_TOOL_ID ) || ( inputs.snow_server == 'CAT' && secrets.CAT_SN_ORCHESTRATION_TOOL_ID ) || ( inputs.snow_server == 'SIT' && secrets.SIT_SN_ORCHESTRATION_TOOL_ID ) || secrets.SN_ORCHESTRATION_TOOL_ID }}
+      SNOW_TOKEN: ${{ ( github.event.client_payload.server == 'PROD' && secrets.PROD_SN_DEVOPS_INTEGRATION_TOKEN ) || ( github.event.client_payload.server == 'CAT' && secrets.CAT_SN_DEVOPS_INTEGRATION_TOKEN ) || ( github.event.client_payload.server == 'SIT' && secrets.SIT_SN_DEVOPS_INTEGRATION_TOKEN ) || ( github.event.client_payload.server == 'DEV' && secrets.SN_DEVOPS_INTEGRATION_TOKEN ) || ( inputs.snow_server == 'PROD' && secrets.PROD_SN_DEVOPS_INTEGRATION_TOKEN ) || ( inputs.snow_server == 'CAT' && secrets.CAT_SN_DEVOPS_INTEGRATION_TOKEN ) || ( inputs.snow_server == 'SIT' && secrets.SIT_SN_DEVOPS_INTEGRATION_TOKEN ) || secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
+      YAML_PROPERTY: ${{ github.event.action == 'YAML Update CR Creation' && github.event.client_payload.yaml_property || github.event.enterprise && inputs.yaml_property || 'image.tag' }}
+      NEW_VALUE: ${{ github.event.action == 'YAML Update CR Creation' && github.event.client_payload.new_value || github.event.enterprise && inputs.new_value || 'latest' }}
+      ENVIRONMENT: ${{ github.event.action == 'YAML Update CR Creation' && github.event.client_payload.environment || github.event.enterprise && inputs.environment || 'CAT' }}
+      SUBFOLDER_FILTER: ${{ github.event.action == 'YAML Update CR Creation' && github.event.client_payload.subfolder_filter || github.event.enterprise && inputs.subfolder_filter || '*' }}
+      FILENAME_FILTER: ${{ github.event.action == 'YAML Update CR Creation' && github.event.client_payload.filename_filter || github.event.enterprise && inputs.filename_filter || 'ghwh-splunk-app' }}
+      ARGOCD_SERVER: ${{ github.event.action == 'YAML Update CR Creation' && github.event.client_payload.argocd_server || github.event.enterprise && inputs.argocd_server || 'argocd-{env}.usps.gov' }}
+      ARGOCD_APPS: ${{ github.event.action == 'YAML Update CR Creation' && github.event.client_payload.argocd_apps || github.event.enterprise && inputs.argocd_apps || '*' }}
+      REPO: ${{ github.event.repository.name }}
+      ACTOR: ${{ github.actor }}
+      CORRELATION_URL: ${{ github.run_id }}
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+      - name: Configure Git User
+        uses: fregante/setup-git-user@v2
+      - name: Configure Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: PIP Dependency Install
+        id: pyyaml
+        run: pip install -q ruamel.yaml requests
+
+      - name: Update Manifest files
+        run: |
+          python -u .github/workflows/crgen.py --imageupdate --verbose
+          if [[ -z "$(git status -s)" ]]; then
+            echo "::error ::There were no git changes. Nothing to do."
+            exit 1
+          fi
+          echo "Modified the following files:" >> $GITHUB_STEP_SUMMARY
+          git status -s >> $GITHUB_STEP_SUMMARY
+        env:
+          PR_NUMBER: "" # not known yet.
+          CR_NUMBER: "" # not known yet.
+
+       # No PR/CR is required for DEV/SIT environments.
+      - name: Commit to Main Branch
+        if: ${{ ( github.event.action == 'YAML Update CR Creation' && ( github.event.client_payload.environment == 'DEV' || github.event.client_payload.environment == 'SIT')) || ( env.ENVIRONMENT == 'DEV' || env.ENVIRONMENT == 'SIT' ) }}
+        run: |
+          git add .
+          git commit -m "Update ${YAML_PROPERTY} to ${NEW_VALUE}."
+          git push
+          echo "Commited directly to main branch because a DEV/SIT deployment was requested." >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate Change Request JSON
+        if: ${{ ( github.event.action == 'YAML Update CR Creation' && ( github.event.client_payload.environment == 'CAT' || github.event.client_payload.environment == 'PROD' )) || ( env.ENVIRONMENT == 'CAT' || env.ENVIRONMENT == 'PROD' ) }}
+        run: |
+          if [[ "${SNOW_SERVER_ENV}" == "DEV" ]] || [[ "${SNOW_SERVER_ENV}" == "SIT" ]]; then
+            python .github/workflows/crgen.py --cr_json
+          else
+            python .github/workflows/crgen.py --cr_json --simple
+          fi
+          echo JSONDATA=$(cat .github/workflows/cr.json) >> $GITHUB_ENV
+          cat .github/workflows/cr.json | jq
+          curl https://api.ipify.org; echo
+          date
+          echo "Creating CR on ${SNOW_SERVER_URL}."
+          echo "${JOB_NAME}"
+        env:
+          PR_NUMBER: "" # Don't have one yet at this point.
+          CR_NUMBER: "" # Don't have one yet at this point.
+          JOB_NAME: ${{ github.job }}
+
+      - name: Create a ServiceNow Change Request
+        continue-on-error: true
+        if: ${{ ( github.event.action == 'YAML Update CR Creation' && ( github.event.client_payload.environment == 'CAT' || github.event.client_payload.environment == 'PROD' )) || ( env.ENVIRONMENT == 'CAT' || env.ENVIRONMENT == 'PROD' ) }}
+        id: createcr
+        # uses: ServiceNow/servicenow-devops-change@v6.1.0
+        uses: david-v-pierce-usps/servicenow-devops-change@main
+        with:
+          devops-integration-token: ${{ env.SNOW_TOKEN }}
+          instance-url: ${{ env.SNOW_SERVER_URL  }}
+          tool-id: ${{ env.SNOW_TOOL_ID }}
+          context-github: ${{ toJSON(github) }}
+          job-name: ${{ github.job }}
+          change-request: '${{ env.JSONDATA }}'
+          interval: '15'
+          timeout: '120'
+          changeCreationTimeOut: '120'
+          abortOnChangeCreationFailure: true
+          abortOnChangeStepTimeout: true
+
+      - name: Create a ServiceNow Change Request (Retry)
+        if: ${{ (( github.event.action == 'YAML Update CR Creation' && ( github.event.client_payload.environment == 'CAT' || github.event.client_payload.environment == 'PROD' )) || ( env.ENVIRONMENT == 'CAT' || env.ENVIRONMENT == 'PROD' )) && steps.createcr.outcome == 'failure' }}
+        id: createcr_retry
+        uses: ServiceNow/servicenow-devops-change@v6.1.0
+        with:
+          devops-integration-token: ${{ env.SNOW_TOKEN }}
+          instance-url: ${{ env.SNOW_SERVER_URL  }}
+          tool-id: ${{ env.SNOW_TOOL_ID }}
+          context-github: ${{ toJSON(github) }}
+          job-name: ${{ github.job }}
+          change-request: '${{ env.JSONDATA }}'
+          interval: '15'
+          timeout: '120'
+          changeCreationTimeOut: '120'
+          abortOnChangeCreationFailure: true
+          abortOnChangeStepTimeout: true
+
+      - name: Commit & Create Pull Request
+        if: ${{ ( github.event.action == 'YAML Update CR Creation' && ( github.event.client_payload.environment == 'CAT' || github.event.client_payload.environment == 'PROD' )) || env.ENVIRONMENT == 'CAT' || env.ENVIRONMENT == 'PROD' }}
+        id: createpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "CR: ${{ ( steps.createcr.outcome == 'success' && steps.createcr.outputs.change-request-number ) || steps.createcr_retry.outputs.change-request-number }}, ${{ env.ENVIRONMENT }} Update ${{ env.YAML_PROPERTY }} to ${{ env.NEW_VALUE }} in ${{ env.ENVIRONMENT }}, ${{ env.ARGOCD_SERVER }}."
+          author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+          branch: "update-${{ env.ENVIRONMENT }}-${{ env.YAML_PROPERTY }}-${{ env.NEW_VALUE }}"
+          title: "Update Deployment: ${{ ( steps.createcr.outcome == 'success' && steps.createcr.outputs.change-request-number ) || steps.createcr_retry.outputs.change-request-number }} CR: ${{ ( steps.createcr.outcome == 'success' && steps.createcr.outputs.change-request-number ) || steps.createcr_retry.outputs.change-request-number }}"
+          body: "${{ env.ENVIRONMENT }} Update ${{ env.YAML_PROPERTY }} to ${{ env.NEW_VALUE }} in ${{ env.ENVIRONMENT }}, ${{ env.ARGOCD_SERVER }}. Refer to CR: ${{ ( steps.createcr.outcome == 'success' && steps.createcr.outputs.change-request-number ) || steps.createcr_retry.outputs.change-request-number }}"
+          draft: false
+
+      - name: Generate Implementation Plan
+        if: ${{ ( github.event.action == 'YAML Update CR Creation' && ( github.event.client_payload.environment == 'CAT' || github.event.client_payload.environment == 'PROD' )) || ( env.ENVIRONMENT == 'CAT' || env.ENVIRONMENT == 'PROD' ) }}
+        run: |
+          if [[ "${PR_NUMBER}" == "" ]]; then
+            echo "No pull request was created. Cannot continue."
+            echo "::error ::No pull request was created. Cannot continue."
+            exit 1
+          fi
+          echo "Created ${CR_NUMBER}, updating implementation plan." >> $GITHUB_STEP_SUMMARY
+          if [[ "${SNOW_SERVER_ENV}" == "DEV" ]] || [[ "${SNOW_SERVER_ENV}" == "SIT" ]]; then
+            python .github/workflows/crgen.py --cr_update
+          else
+            python .github/workflows/crgen.py --cr_update --simple
+          fi
+          echo PLANDATA=$(cat .github/workflows/imp.json) >> $GITHUB_ENV
+        env:
+          PR_NUMBER: ${{ steps.createpr.outputs.pull-request-number }}
+          CR_NUMBER: ${{ ( steps.createcr.outcome == 'success' && steps.createcr.outputs.change-request-number ) || steps.createcr_retry.outputs.change-request-number }}
+
+      - name: Append Implementation Plan to Change Request
+        if: ${{ ( github.event.action == 'YAML Update CR Creation' && ( github.event.client_payload.environment == 'CAT' || github.event.client_payload.environment == 'PROD' )) || ( env.ENVIRONMENT == 'CAT' || env.ENVIRONMENT == 'PROD' ) }}
+        uses: ServiceNow/servicenow-devops-update-change@v3.1.0
+        with:
+          devops-integration-token: ${{ env.SNOW_TOKEN }}
+          instance-url: ${{ env.SNOW_SERVER_URL  }}
+          tool-id: ${{ env.SNOW_TOOL_ID }}
+          context-github: ${{ toJSON(github) }}
+          change-request-number: ${{ (steps.createcr.outcome == 'success' && steps.createcr.outputs.change-request-number ) || steps.createcr_retry.outputs.change-request-number }}
+          change-request-details: '${{ env.PLANDATA }}'
