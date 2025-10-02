@@ -1,0 +1,125 @@
+###############################
+##### ReadMe:             #####
+###############################
+
+long_doc_string: |
+    In order to utilize the automated CR/Deployment process, this file will
+    need to be added to the root level of your deployment repository.
+
+    The values below (some optional) should be populated with the parameters used
+    to create a CR for this application(s). If you make them kind of generic,
+    you won't have to update this file very often.
+
+    For some of these values, like the "default_justification" field, you will
+    probably want to use a multiline string. Because this file is YAML, you can
+    use any of the usual methods for multiline strings to do this, such as this one,
+    the '|'.
+
+    You can use the following placeholders in these fields: {ENVIRONMENT}, {NEW_VALUE},
+    {SUBFOLDER_FILTER}, {FILENAME_FILTER}, {REPO}, {start_date}, {end_date}, and
+    {requesting_user}. The all caps values will be replaced with the values supplied
+    when you request a deployment. The other values are calculated at execution time.
+
+    The additional placeholders: {requesting_user}, {starttime}, and {endtime} will
+    be substituted with appropriate values determined at runtime.
+
+    By default, your github username (e.g. john-a-smith-usps) will be used to infer
+    your ServiceNow username (e.g., John A Smith) when you submit a deployment request.
+    If your github username doesn't match this pattern, or if you would like Change
+    Requests to be owned by a specific person, you can provide their ServiceNow user
+    name in the "default_creator_name" parameter.
+
+# u_tslc_activity must be one of the following values:
+tslc_activity_options: |
+    "Application Configuration Change"
+    "Bound app servers to VIP"
+    "Code or Data Change"
+    "Code Promotion"
+    "Data extract"
+    "Database Changes"
+    "DB Configuration Change"
+    "Decommission"
+    "Emergency CI Change"
+    "JCL Change"
+    "Job Schedule Change"
+    "Maintenance"
+    "MSR promotion"
+    "OS or DB SW Patch Change"
+    "SW Code Change"
+    "SW Upgrade Change"
+
+# Everything above this line is here for your reference and ignored by the CR
+# and deployment automation. You may remove it from this file at your discretion.
+
+###############################
+##### Required Fields:    #####
+###############################
+
+# The display name of your business service and Change Item. (not a system ID.)
+business_service: "ServiceNow"
+cmdb_name: "SERVICENOW"
+
+# Request and Assignment Group can be either a System ID or a Name.
+request_group: "8aebedc693b412d0b4597ba86cba10b4"
+assignment_group: "CM NIT-Infra Ops DB"
+
+# PCI = Payment Card Infrastructure
+pci_in_scope: "No"
+# This field is required if 'pci_in_scope' is "Yes", and is ignored otherwise.
+u_functionality_testing: |
+    Hello World!
+
+# TSLC Association:
+u_tslc_project: "No"
+# The following two fields are required only if "u_tslc_project" is "Yes"
+# The value for 'u_tslc_activity' is case sensitive and must be one of the options listed above.
+# u_tslc_project_id: "1031-5506"
+# u_tslc_activity: "Code Promotion"
+
+###############################
+##### Optional Fields:    #####
+###############################
+
+# default_argocd_applist:
+# - list-of-argocd-applications
+# - which-will-be-appended-to
+# - the-list-submitted-at-runtime
+# - and-always-be-synced
+
+# default_short_description: "A short description."
+# default_description: "some description."
+# default_justification: |
+#    1. In detail explain what work is being performed and reason why?
+#
+#    We are upgrading {app} in {environment}/{region} to version {image}.
+#
+#    2. When will the work occur?  Date, Start and end time including maintenance window.
+#
+#    Work will occur between {startdate} and {enddate}.
+#
+#    3. Name of Person performing the work?
+#
+#    Work is being performed via automation but will be monitored by {requesting_user}
+#
+#    4. What applications/systems will be impacted?
+#
+#    {app} in {environment}/{region} will be upgraded to version {image}. This will impact
+#    systems that rely on this application, such as:
+#
+#    5. Who is responsible for verifying the work and performing a health check?
+#
+#    {requesting_user}
+#
+#    6. Provide a link to the Test Scripts.
+#
+#    Test scripts for this application are located here:
+#
+#    7. Required for External facing applications.
+#    - Have the updated release notes been sent to the customer? Yes, prior to {startdate}
+#    - If applicable, has an industry alert been issued for this system change request? Yes, prior to {startdate}
+#    - If the change request alters the format or response, has the customer been notified? Yes, prior to {startdate}
+
+# default_implementation_plan: "We will do this thing."
+# default_backout_plan: "If this breaks I will press the undo button."
+# default_test_plan: "Test the thing!"
+# default_creator_name: "John A Smith"
