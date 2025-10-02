@@ -161,7 +161,7 @@ jobs:
           tool-id: ${{ env.SNOW_TOOL_ID }}
           context-github: ${{ toJSON(github) }}
           job-name: ${{ github.job }}
-          change-request: '${{ env.JSONDATA }}'
+          change-request: '{"setCloseCode":"true","attributes":{"short_description":"Automated Software Deployment","description":"Automated Software Deployment.","assignment_group":"8aebedc693b412d0b4597ba86cba10b4","implementation_plan":"Software update is tested and results can be found in Test Summaries Tab; When the change is approved the implementation happens automated by the CICD pipeline within the change planned start and end time window.","backout_plan":"When software fails in production, the previous software release will be re-deployed.","test_plan":"Testing if the software was successfully deployed"}}'
           interval: '15'
           timeout: '120'
           changeCreationTimeOut: '120'
