@@ -116,7 +116,7 @@ jobs:
         if: ${{ ( github.event.action == 'YAML Update CR Creation' && ( github.event.client_payload.environment == 'CAT' || github.event.client_payload.environment == 'PROD' )) || ( env.ENVIRONMENT == 'CAT' || env.ENVIRONMENT == 'PROD' ) }}
         run: |
           if [[ "${SNOW_SERVER_ENV}" == "DEV" ]] || [[ "${SNOW_SERVER_ENV}" == "SIT" ]]; then
-            python .github/workflows/crgen.py --cr_json
+            python .github/workflows/crgen.py --cr_json --simple
           else
             python .github/workflows/crgen.py --cr_json --simple
           fi
