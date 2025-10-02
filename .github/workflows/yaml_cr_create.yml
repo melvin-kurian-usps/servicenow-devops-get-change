@@ -26,15 +26,15 @@ on:
       filename_filter:
         description: Only files with this string in their path will be updated. Use '*' to search all files.
         required: true
-        default: 'eastus'
+        default: '*'
       subfolder_filter:
         description: For deploy repos with subfolders. Only files with a parent directory matching this value will be updated. Use '*' to search all subfolders.
         required: true
-        default: 'cat'
+        default: '*'
       yaml_property:
         description: Yaml property to update. (Usually something like 'image.tag'). Comma separated list for multiple.
         required: true
-        default: 'image.tag,repository.tag'
+        default: 'image.tag,foobar'
       new_value:
         description: New value for the specified propert[y/ies]. (Usually a container image tag, e.g., "v3.5.1@sha...")
         required: true
