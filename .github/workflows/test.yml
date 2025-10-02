@@ -4,25 +4,29 @@ on:
   workflow_dispatch:
     
 jobs:
-  UpdateChangeDetails:
+  changeApproval:
+    name: ServiceNow Change Approval
     runs-on: ubuntu-latest
-    name: Servicenow Update Change Details
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: Servicenow Update Change Details
-        uses: ServiceNow/servicenow-devops-update-change@v3.1.0
-        id: update
+      - name: ServiceNow Change Approval
+        uses: ServiceNow/servicenow-devops-change@v6.1.0
+        id: create
         with:
-          change-request-number: 'CHG1167786'
           devops-integration-token: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
           tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
-
+          job-name: 'ServiceNow Change Approval'
          # devops-integration-user-name: 'devops.integration.user'
          # devops-integration-user-password: '3o7xwdM2GN1K2iQp'
           instance-url: 'https://usps13.servicenowservices.com'
           context-github: ${{ toJSON(github) }}
-          change-request-details: '{"short_description": "MKMK Test description in Updated by Github custom Action"}'
-      - name: Output of UpdateChangeDetails
-        run: echo "The Status of Update Change Request Details => ${{ steps.update.outputs.status }}"
+          change-request: '{"attributes":{"short_description":"Automated Software Deployment"}'
+          interval: '100'
+          timeout: '3600'
+          changeCreationTimeOut: '3600'
+          abortOnChangeCreationFailure: true
+          abortOnChangeStepTimeout: true
+      - name: Output of Change Creation
+        run: echo "change-request-number = ${{ steps.create.outputs.change-request-number }} and change-request-sys-id = ${{ steps.create.outputs.change-request-sys-id }} " >> $GITHUB_OUTPUT
+      # - name: Output of UpdateChangeDetails
+      #   run: echo "The Status of Update Change Request Details => ${{ steps.update.outputs.status }}"
