@@ -23,24 +23,23 @@ jobs:
 
     - name: Compile
       run: npm run build
-
-  GetChangeDetails:
+  UpdateChangeDetails:
     needs: build
     runs-on: ubuntu-latest
-    name: Servicenow Get Change Details
+    name: Servicenow Update Change Details
 
     steps:
       - name: Checkout
         uses: actions/checkout@v3
-      - name: Servicenow Get Change Details
-        uses: ServiceNow/servicenow-devops-get-change@2.0.0
-        id: get
+      - name: Servicenow Update Change Details
+        uses: ServiceNow/servicenow-devops-update-change@v3.1.0
+        id: update
         with:
+          change-request-number: 'CHG0030004'
           devops-integration-user-name: ${{ secrets.SN_DEVOPS_USER }}
           devops-integration-user-password: ${{ secrets.SN_DEVOPS_PASSWORD }}
           instance-url: ${{ secrets.SN_INSTANCE_URL }}
           context-github: ${{ toJSON(github) }}
-          tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
-          change-details: '{"pipeline_name":"maheshganji/custom-action-get/CustomActionGetWorkflow","stage_name":"ServiceNow Change Approval","build_number":"3732116819"}'
-      - name: Output of GetChangeDetails
-        run: echo "The Status of Update Change Request Details => ${{ steps.get.outputs.change-request-number }}"
+          change-request-details: '{"short_description": "Test description in Updated by Github custom Action","description":"Automated Software Deployment.","close_code":"successful", "close_notes":"Closing during Github Actions CustomActionUpdate","state":"3"}'
+      - name: Output of UpdateChangeDetails
+        run: echo "The Status of Update Change Request Details => ${{ steps.update.outputs.status }}"
