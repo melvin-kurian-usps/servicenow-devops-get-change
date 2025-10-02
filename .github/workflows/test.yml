@@ -16,10 +16,13 @@ jobs:
         id: update
         with:
           change-request-number: 'CHG1167786'
-          devops-integration-user-name: 'devops.integration.user'
-          devops-integration-user-password: '3o7xwdM2GN1K2iQp'
+          devops-integration-token: ${{ secrets.SN_DEVOPS_INTEGRATION_TOKEN }}
+          tool-id: ${{ secrets.SN_ORCHESTRATION_TOOL_ID }}
+
+         # devops-integration-user-name: 'devops.integration.user'
+         # devops-integration-user-password: '3o7xwdM2GN1K2iQp'
           instance-url: 'https://usps13.servicenowservices.com'
           context-github: ${{ toJSON(github) }}
-          change-request-details: '{"short_description": "Test description in Updated by Github custom Action"}'
+          change-request-details: '{"short_description": "MKMK Test description in Updated by Github custom Action"}'
       - name: Output of UpdateChangeDetails
         run: echo "The Status of Update Change Request Details => ${{ steps.update.outputs.status }}"
