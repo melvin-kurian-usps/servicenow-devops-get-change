@@ -20,6 +20,6 @@ jobs:
           devops-integration-user-password: '3o7xwdM2GN1K2iQp'
           instance-url: 'https://usps13.servicenowservices.com'
           context-github: ${{ toJSON(github) }}
-          change-request-details: '{"short_description": "Test description in Updated by Github custom Action","description":"Automated Software Deployment.","close_code":"successful", "close_notes":"Closing during Github Actions CustomActionUpdate","state":"3"}'
+          change-request-details: '{"short_description": "Test description in Updated by Github custom Action"}'
       - name: Output of UpdateChangeDetails
         run: echo "The Status of Update Change Request Details => ${{ steps.update.outputs.status }}"
